@@ -11,8 +11,8 @@ import hr.fer.infsus.repository.OrderRepository;
 import hr.fer.infsus.repository.ProductRepository;
 import hr.fer.infsus.repository.UserRepository;
 import hr.fer.infsus.service.OrderService;
-import hr.fer.infsus.util.mapper.OrderItemMapper;
 import hr.fer.infsus.util.mapper.OrderMapper;
+import hr.fer.infsus.util.validator.OrderValidator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,10 +27,10 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
-    private final OrderItemMapper orderItemMapper;
     private final UserRepository userRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductRepository productRepository;
+    private final OrderValidator orderValidator;
 
     public List<OrderDto> getAllOrders() {
         final List<Order> orders = orderRepository.findAll();
@@ -51,20 +51,19 @@ public class OrderServiceImpl implements OrderService {
 
     public OrderDto createOrder(OrderDto orderDto) {
         final Order order = new Order();
-        final List<OrderItem> orderItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
-        orderItems.forEach(orderItem -> {
-            orderItem.setOrder(order);
-            orderItem.setPrice(orderItem.getProduct().getPrice());
-        });
 
         final User user = userRepository.findById(orderDto.user().id()).orElseThrow(()->
                 new EntityNotFoundException(String.format("User with id %s not found", orderDto.user().id())));
 
         order.setUser(user);
-        order.setOrderItemsList(orderItems);
         order.setTotalAmount();
-        order.setCreditCardNumber(String.format("****%s", orderDto.creditCardNumber()));
-        order.setOrderDate(new Date());
+
+        orderValidator.creditCardNumber(orderDto.creditCardNumber());
+        order.setCreditCardNumber(String.format("%s", orderDto.creditCardNumber()));
+
+        final Date date = new Date();
+        orderValidator.notFutureDate(date);
+        order.setOrderDate(date);
         order.setDeliveryAddress(orderDto.deliveryAddress());
 
         return orderMapper.orderToOrderDto(orderRepository.save(order));
@@ -80,25 +79,13 @@ public class OrderServiceImpl implements OrderService {
 
         existingOrder.setDeliveryAddress(orderDto.deliveryAddress());
 
+        orderValidator.creditCardNumber(orderDto.creditCardNumber());
         existingOrder.setCreditCardNumber(String.format("%s", orderDto.creditCardNumber()));
 
-        existingOrder.getOrderItemsList().clear();
-
-
-        List<OrderItem> updatedItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
-        updatedItems.forEach(item -> {
-            Product product = productRepository.findById(item.getProduct().getId())
-                    .orElseThrow(() -> new EntityNotFoundException("Product with id " + item.getProduct().getId() + " not found"));
-            item.setProduct(product);
-
-            item.setOrder(existingOrder);
-            item.setPrice(product.getPrice());
-        });
-
-        existingOrder.getOrderItemsList().addAll(updatedItems);
-
         existingOrder.setTotalAmount();
-        existingOrder.setOrderDate(new Date());
+
+        orderValidator.notFutureDate(orderDto.orderDate());
+        existingOrder.setOrderDate(orderDto.orderDate());
 
         return orderMapper.orderToOrderDto(orderRepository.save(existingOrder));
     }

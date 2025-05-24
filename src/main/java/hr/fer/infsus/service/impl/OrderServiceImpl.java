@@ -73,7 +73,7 @@ public class OrderServiceImpl implements OrderService {
 
         orderItemRepository.deleteByOrderId(order.getId());
 
-        List<OrderItem> newOrderItems = mergeOrderItems(orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList()));
+        List<OrderItem> newOrderItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
 
 
         for (OrderItem orderItem : newOrderItems) {
@@ -91,28 +91,6 @@ public class OrderServiceImpl implements OrderService {
 
     public void deleteOrder(Long orderId) {
         orderRepository.deleteById(orderId);
-    }
-
-    private static List<OrderItem> mergeOrderItems(List<OrderItem> orderItems) {
-        Map<Long, OrderItem> mergedMap = new HashMap<>();
-
-        for (OrderItem item : orderItems) {
-            Long productId = item.getProduct().getId();
-            if (mergedMap.containsKey(productId)) {
-                OrderItem existing = mergedMap.get(productId);
-                int totalQuantity = existing.getQuantity() + item.getQuantity();
-                double totalPrice = existing.getPrice() * existing.getQuantity() + item.getPrice() * item.getQuantity();
-                double newPrice = totalQuantity == 0 ? 0 : totalPrice / totalQuantity;
-
-                existing.setQuantity(totalQuantity);
-                existing.setPrice(newPrice);
-            } else {
-                // You may want to create a new instance if you want to avoid mutating input objects
-                mergedMap.put(productId, item);
-            }
-        }
-
-        return new ArrayList<>(mergedMap.values());
     }
 
 }

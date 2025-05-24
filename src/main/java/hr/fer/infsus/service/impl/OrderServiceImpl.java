@@ -73,20 +73,16 @@ public class OrderServiceImpl implements OrderService {
                 new EntityNotFoundException(String.format("User with id %s not found", orderDto.user().id())));
 
         List<OrderItem> existingOrderItems = orderItemRepository.findByOrderId(order.getId());
-        Map<Long, OrderItem> existingItemsByProductId = existingOrderItems.stream()
-                .collect(Collectors.toMap(
-                        oi -> oi.getProduct().getId(),
-                        oi -> oi
-                ));
+        if (!existingOrderItems.isEmpty()){
+            for (OrderItem orderItem : existingOrderItems) {
+                orderItemRepository.deleteById(orderItem.getId());
+            }
+        }
 
         List<OrderItem> newOrderItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
 
         for (OrderItem newOrderItem : newOrderItems) {
-            Long productId = newOrderItem.getProduct().getId();
-            if (existingItemsByProductId.containsKey(productId)) {
-                int existingQuantity = existingItemsByProductId.get(productId).getQuantity();
-                newOrderItem.setQuantity(newOrderItem.getQuantity() + existingQuantity);
-            }
+
             newOrderItem.setOrder(order);
         }
 

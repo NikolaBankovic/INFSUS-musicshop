@@ -5,10 +5,10 @@ import hr.fer.infsus.model.Order;
 import hr.fer.infsus.model.OrderItem;
 import hr.fer.infsus.model.User;
 import hr.fer.infsus.repository.OrderRepository;
+import hr.fer.infsus.repository.UserRepository;
 import hr.fer.infsus.service.OrderService;
 import hr.fer.infsus.util.mapper.OrderItemMapper;
 import hr.fer.infsus.util.mapper.OrderMapper;
-import hr.fer.infsus.util.mapper.UserMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
-    private final UserMapper userMapper;
+    private final UserRepository userRepository;
 
     public List<OrderDto> getAllOrders() {
         final List<Order> orders = orderRepository.findAll();
@@ -50,7 +50,8 @@ public class OrderServiceImpl implements OrderService {
             orderItem.setPrice(orderItem.getProduct().getPrice());
         });
 
-        final User user = userMapper.userDtoToUser(orderDto.user());
+        final User user = userRepository.findById(orderDto.user().id()).orElseThrow(()->
+                new EntityNotFoundException(String.format("User with id %s not found", orderDto.user().id())));
 
         order.setUser(user);
         order.setOrderItemsList(orderItems);
@@ -66,7 +67,10 @@ public class OrderServiceImpl implements OrderService {
         final Order order = orderRepository.findById(id).orElseThrow(() ->
                 new EntityNotFoundException(String.format("Order with ID(%d) doesn't exist.", id)));
 
-        order.setUser(userMapper.userDtoToUser(orderDto.user()));
+        final User user = userRepository.findById(orderDto.user().id()).orElseThrow(()->
+                new EntityNotFoundException(String.format("User with id %s not found", orderDto.user().id())));
+
+        order.setUser(user);
         order.setOrderItemsList(orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList()));
         order.setOrderDate(orderDto.orderDate());
         order.setCreditCardNumber(orderDto.creditCardNumber());

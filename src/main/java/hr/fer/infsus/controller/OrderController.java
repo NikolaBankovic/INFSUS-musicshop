@@ -1,5 +1,6 @@
 package hr.fer.infsus.controller;
 
+import hr.fer.infsus.dto.ChangeOrderItemDto;
 import hr.fer.infsus.dto.OrderDto;
 import hr.fer.infsus.service.OrderService;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +38,16 @@ public class OrderController {
     @PutMapping("/{orderId}")
     public OrderDto updateOrder(@PathVariable final Long orderId, @RequestBody final OrderDto orderDto) {
         return orderService.updateOrder(orderId, orderDto);
+    }
+
+    @PostMapping("/orderItem")
+    public OrderDto addUpdateOrderItem(@RequestBody final ChangeOrderItemDto changeOrderItemDto) {
+        return orderService.addUpdateOrderItem(changeOrderItemDto);
+    }
+
+    @DeleteMapping("/orderItem")
+    public OrderDto deleteUpdateOrderItem(@RequestBody final ChangeOrderItemDto changeOrderItemDto) {
+        return orderService.removeOrderItem(changeOrderItemDto);
     }
 
     @DeleteMapping("/{orderId}")

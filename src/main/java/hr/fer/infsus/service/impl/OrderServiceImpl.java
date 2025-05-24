@@ -1,5 +1,6 @@
 package hr.fer.infsus.service.impl;
 
+import hr.fer.infsus.dto.ChangeOrderItemDto;
 import hr.fer.infsus.dto.OrderDto;
 import hr.fer.infsus.model.Order;
 import hr.fer.infsus.model.OrderItem;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +70,6 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.orderToOrderDto(orderRepository.save(order));
     }
 
-    @Override
     public OrderDto updateOrder(final Long id, final OrderDto orderDto) {
         final Order existingOrder = orderRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Order with id " + id + " not found"));
@@ -100,6 +101,51 @@ public class OrderServiceImpl implements OrderService {
         existingOrder.setOrderDate(new Date());
 
         return orderMapper.orderToOrderDto(orderRepository.save(existingOrder));
+    }
+
+    public OrderDto addUpdateOrderItem(final ChangeOrderItemDto changeOrderItemDto) {
+        final Product product = productRepository.findById(changeOrderItemDto.productId()).orElseThrow(() ->
+                new EntityNotFoundException("Product with id " + changeOrderItemDto.productId() + " not found"));
+
+        final Order order = orderRepository.findById(changeOrderItemDto.orderId()).orElseThrow(() ->
+                new EntityNotFoundException("Order with id " + changeOrderItemDto.orderId() + " not found"));
+
+        final Optional<OrderItem> orderItem =
+                orderItemRepository.findByOrderIdAndProductId(changeOrderItemDto.orderId(), changeOrderItemDto.productId());
+
+        if (orderItem.isPresent()) {
+            orderItem.get().setQuantity(changeOrderItemDto.quantity());
+            orderItemRepository.save(orderItem.get());
+        } else {
+            final OrderItem newOrderItem = new OrderItem();
+            newOrderItem.setOrder(order);
+            newOrderItem.setProduct(product);
+            newOrderItem.setQuantity(changeOrderItemDto.quantity());
+            newOrderItem.setPrice(product.getPrice());
+            orderItemRepository.save(newOrderItem);
+        }
+
+        return orderMapper.orderToOrderDto(orderRepository.save(order));
+    }
+
+    public OrderDto removeOrderItem(final ChangeOrderItemDto changeOrderItemDto) {
+        productRepository.findById(changeOrderItemDto.productId()).orElseThrow(() ->
+                new EntityNotFoundException("Product with id " + changeOrderItemDto.productId() + " not found"));
+
+        final Order order = orderRepository.findById(changeOrderItemDto.orderId()).orElseThrow(() ->
+                new EntityNotFoundException("Order with id " + changeOrderItemDto.orderId() + " not found"));
+
+        final Optional<OrderItem> orderItem =
+                orderItemRepository.findByOrderIdAndProductId(changeOrderItemDto.orderId(), changeOrderItemDto.productId());
+
+        if (orderItem.isPresent()) {
+            order.getOrderItemsList().remove(orderItem.get());
+            orderRepository.save(order);
+            orderItemRepository.delete(orderItem.get());
+        }
+
+        return orderMapper.orderToOrderDto(orderRepository.save(order));
+
     }
 
     public void deleteOrder(Long orderId) {

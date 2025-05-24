@@ -71,10 +71,11 @@ public class OrderServiceImpl implements OrderService {
                 new EntityNotFoundException(String.format("User with id %s not found", orderDto.user().id())));
 
         order.setUser(user);
-        order.setOrderItemsList(orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList()));
+        //order.setOrderItemsList(orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList()));
         order.setOrderDate(orderDto.orderDate());
         order.setCreditCardNumber(orderDto.creditCardNumber());
         order.setTotalAmount();
+        order.setDeliveryAddress(orderDto.deliveryAddress());
 
         return orderMapper.orderToOrderDto(orderRepository.save(order));
     }

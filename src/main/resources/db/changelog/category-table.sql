@@ -6,3 +6,7 @@ CREATE TABLE public.category (
                                CONSTRAINT category_pkey PRIMARY KEY (id)
 );
 --rollback DROP TABLE public.category
+
+--changeset nbankovic:category-table-24052025-01
+INSERT INTO public.category (name) VALUES ('Gitare');
+INSERT INTO public.category (name) VALUES ('Bubnjevi');

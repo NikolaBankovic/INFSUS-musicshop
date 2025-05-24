@@ -16,3 +16,9 @@ CREATE TABLE public."order" (
 ALTER TABLE public."order"
     DROP CONSTRAINT user_id_fk,
     ADD CONSTRAINT user_id_fk FOREIGN KEY (user_id) REFERENCES public."user"(id) ON DELETE SET NULL;
+
+--changeset nbankovic:order-table-24052025-01
+INSERT INTO public."order" (total_price, user_id, credit_card_number, order_date, delivery_address)
+VALUES
+    (2999.99, 1, '****1234', NOW(), 'Zagrebačka 12, Zagreb'),
+    (9999.98, 2, '****4321', NOW(), 'Split, Riva 4');

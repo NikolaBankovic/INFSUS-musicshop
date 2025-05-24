@@ -9,6 +9,7 @@ public record OrderDto(
         List<OrderItemDto> orderItemsList,
         double totalPrice,
         String creditCardNumber,
-        Date orderDate
+        Date orderDate,
+        String deliveryAddress
 ) {
 }

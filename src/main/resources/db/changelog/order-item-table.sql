@@ -20,3 +20,10 @@ ALTER TABLE public.order_item
 ALTER TABLE public.order_item
     DROP CONSTRAINT order_id_fk,
     ADD CONSTRAINT order_id_fk FOREIGN KEY (order_id) REFERENCES public."order"(id) ON DELETE CASCADE;
+
+--changeset nbankovic:order-item-table-24052025-01
+
+INSERT INTO public.order_item (price, quantity, order_id, product_id)
+VALUES
+    (2999.99, 1, 1, 1),
+    (4999.99, 2, 2, 2);

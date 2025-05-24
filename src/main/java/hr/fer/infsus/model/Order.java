@@ -30,6 +30,8 @@ public class Order {
 
     private Date orderDate;
 
+    private String deliveryAddress;
+
     public void setTotalAmount() {
         if (orderItemsList != null) {
             this.totalPrice = orderItemsList.stream()

@@ -1,0 +1,82 @@
+package hr.fer.infsus.service.impl;
+
+import hr.fer.infsus.dto.OrderDto;
+import hr.fer.infsus.model.Order;
+import hr.fer.infsus.model.OrderItem;
+import hr.fer.infsus.model.User;
+import hr.fer.infsus.repository.OrderRepository;
+import hr.fer.infsus.service.OrderService;
+import hr.fer.infsus.util.mapper.OrderItemMapper;
+import hr.fer.infsus.util.mapper.OrderMapper;
+import hr.fer.infsus.util.mapper.UserMapper;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.Date;
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class OrderServiceImpl implements OrderService {
+
+    private final OrderRepository orderRepository;
+    private final OrderMapper orderMapper;
+    private final OrderItemMapper orderItemMapper;
+    private final UserMapper userMapper;
+
+    public List<OrderDto> getAllOrders() {
+        final List<Order> orders = orderRepository.findAll();
+        return orderMapper.ordersToOrderDtos(orders);
+    }
+
+    public List<OrderDto> getOrdersByUserId(Long userId) {
+        final List<Order> orders = orderRepository.findAllByUserId(userId);
+        return orderMapper.ordersToOrderDtos(orders);
+    }
+
+    public OrderDto getOrderById(Long orderId) {
+        final Order order = orderRepository.findById(orderId).orElseThrow(()->
+                new EntityNotFoundException(String.format("Order with id %s not found", orderId)));
+
+        return orderMapper.orderToOrderDto(order);
+    }
+
+    public OrderDto createOrder(OrderDto orderDto) {
+        final Order order = new Order();
+        final List<OrderItem> orderItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
+        orderItems.forEach(orderItem -> {
+            orderItem.setOrder(order);
+            orderItem.setPrice(orderItem.getProduct().getPrice());
+        });
+
+        final User user = userMapper.userDtoToUser(orderDto.user());
+
+        order.setUser(user);
+        order.setOrderItemsList(orderItems);
+        order.setTotalAmount();
+        order.setCreditCardNumber(String.format("****%s", orderDto.creditCardNumber()));
+        order.setOrderDate(new Date());
+        order.setDeliveryAddress(orderDto.deliveryAddress());
+
+        return orderMapper.orderToOrderDto(orderRepository.save(order));
+    }
+
+    public OrderDto updateOrder(final Long id, final OrderDto orderDto) {
+        final Order order = orderRepository.findById(id).orElseThrow(() ->
+                new EntityNotFoundException(String.format("Order with ID(%d) doesn't exist.", id)));
+
+        order.setUser(userMapper.userDtoToUser(orderDto.user()));
+        order.setOrderItemsList(orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList()));
+        order.setOrderDate(orderDto.orderDate());
+        order.setCreditCardNumber(orderDto.creditCardNumber());
+        order.setTotalAmount();
+
+        return orderMapper.orderToOrderDto(orderRepository.save(order));
+    }
+
+    public void deleteOrder(Long orderId) {
+        orderRepository.deleteById(orderId);
+    }
+
+}

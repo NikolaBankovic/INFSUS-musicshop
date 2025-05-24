@@ -17,7 +17,7 @@ CREATE TABLE public."user" (
             );
 --rollback DROP TABLE public."user"
 
---changeset nbankovic:user-table-22072024-02
+--changeset nbankovic:user-table-23052025-02
 INSERT INTO public."user" (email,first_name,last_name,"password",phone_number,"role",username) VALUES
                                                                                                            ('admin@email.com','Admin','Admin','$2a$10$vLKFZ/yBiDyjqiItYgUrEuz3EzIF52xoRfjAfprHCZhJd/WMu8IN6','123654978','ROLE_ADMIN','admin'),
                                                                                                            ('supplier@email.com','Supplier','','$2a$10$8VfJ7xYkiF1d89rtgWKVguq331IVen91MZfYMUJE0bNyfNepW2Pdu','123456798','ROLE_USER','supplier'),

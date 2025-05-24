@@ -69,9 +69,12 @@ public class OrderServiceImpl implements OrderService {
 
         final User user = userRepository.findById(orderDto.user().id()).orElseThrow(()->
                 new EntityNotFoundException(String.format("User with id %s not found", orderDto.user().id())));
-
+        List<OrderItem> orderItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
+        for (OrderItem orderItem : orderItems) {
+            orderItem.setOrder(order);
+        }
         order.setUser(user);
-        //order.setOrderItemsList(orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList()));
+        order.setOrderItemsList(orderItems);
         order.setOrderDate(orderDto.orderDate());
         order.setCreditCardNumber(orderDto.creditCardNumber());
         order.setTotalAmount();

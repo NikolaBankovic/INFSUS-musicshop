@@ -79,9 +79,10 @@ public class OrderServiceImpl implements OrderService {
 
         existingOrder.setDeliveryAddress(orderDto.deliveryAddress());
 
-        existingOrder.setCreditCardNumber(String.format("****%s", orderDto.creditCardNumber()));
+        existingOrder.setCreditCardNumber(String.format("%s", orderDto.creditCardNumber()));
 
-        orderItemRepository.deleteAll(existingOrder.getOrderItemsList());
+        existingOrder.getOrderItemsList().clear();
+
 
         List<OrderItem> updatedItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
         updatedItems.forEach(item -> {
@@ -93,7 +94,7 @@ public class OrderServiceImpl implements OrderService {
             item.setPrice(product.getPrice());
         });
 
-        existingOrder.setOrderItemsList(updatedItems);
+        existingOrder.getOrderItemsList().addAll(updatedItems);
 
         existingOrder.setTotalAmount();
         existingOrder.setOrderDate(new Date());

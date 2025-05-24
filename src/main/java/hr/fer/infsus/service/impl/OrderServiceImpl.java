@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -71,14 +72,24 @@ public class OrderServiceImpl implements OrderService {
         final User user = userRepository.findById(orderDto.user().id()).orElseThrow(()->
                 new EntityNotFoundException(String.format("User with id %s not found", orderDto.user().id())));
 
-        orderItemRepository.deleteByOrderId(order.getId());
+        List<OrderItem> existingOrderItems = orderItemRepository.findByOrderId(order.getId());
+        Map<Long, OrderItem> existingItemsByProductId = existingOrderItems.stream()
+                .collect(Collectors.toMap(
+                        oi -> oi.getProduct().getId(),
+                        oi -> oi
+                ));
 
         List<OrderItem> newOrderItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
 
-
-        for (OrderItem orderItem : newOrderItems) {
-            orderItem.setOrder(order);
+        for (OrderItem newOrderItem : newOrderItems) {
+            Long productId = newOrderItem.getProduct().getId();
+            if (existingItemsByProductId.containsKey(productId)) {
+                int existingQuantity = existingItemsByProductId.get(productId).getQuantity();
+                newOrderItem.setQuantity(newOrderItem.getQuantity() + existingQuantity);
+            }
+            newOrderItem.setOrder(order);
         }
+
         order.setUser(user);
         order.setOrderItemsList(newOrderItems);
         order.setOrderDate(orderDto.orderDate());

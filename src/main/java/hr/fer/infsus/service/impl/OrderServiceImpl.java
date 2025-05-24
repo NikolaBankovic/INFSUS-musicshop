@@ -4,6 +4,7 @@ import hr.fer.infsus.dto.OrderDto;
 import hr.fer.infsus.model.Order;
 import hr.fer.infsus.model.OrderItem;
 import hr.fer.infsus.model.User;
+import hr.fer.infsus.repository.OrderItemRepository;
 import hr.fer.infsus.repository.OrderRepository;
 import hr.fer.infsus.repository.UserRepository;
 import hr.fer.infsus.service.OrderService;
@@ -13,8 +14,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +24,7 @@ public class OrderServiceImpl implements OrderService {
     private final OrderMapper orderMapper;
     private final OrderItemMapper orderItemMapper;
     private final UserRepository userRepository;
+    private final OrderItemRepository orderItemRepository;
 
     public List<OrderDto> getAllOrders() {
         final List<Order> orders = orderRepository.findAll();
@@ -69,12 +70,17 @@ public class OrderServiceImpl implements OrderService {
 
         final User user = userRepository.findById(orderDto.user().id()).orElseThrow(()->
                 new EntityNotFoundException(String.format("User with id %s not found", orderDto.user().id())));
-        List<OrderItem> orderItems = orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList());
-        for (OrderItem orderItem : orderItems) {
+
+        orderItemRepository.deleteByOrderId(order.getId());
+
+        List<OrderItem> newOrderItems = mergeOrderItems(orderItemMapper.orderItemDtosToOrderItems(orderDto.orderItemsList()));
+
+
+        for (OrderItem orderItem : newOrderItems) {
             orderItem.setOrder(order);
         }
         order.setUser(user);
-        order.setOrderItemsList(orderItems);
+        order.setOrderItemsList(newOrderItems);
         order.setOrderDate(orderDto.orderDate());
         order.setCreditCardNumber(orderDto.creditCardNumber());
         order.setTotalAmount();
@@ -85,6 +91,28 @@ public class OrderServiceImpl implements OrderService {
 
     public void deleteOrder(Long orderId) {
         orderRepository.deleteById(orderId);
+    }
+
+    private static List<OrderItem> mergeOrderItems(List<OrderItem> orderItems) {
+        Map<Long, OrderItem> mergedMap = new HashMap<>();
+
+        for (OrderItem item : orderItems) {
+            Long productId = item.getProduct().getId();
+            if (mergedMap.containsKey(productId)) {
+                OrderItem existing = mergedMap.get(productId);
+                int totalQuantity = existing.getQuantity() + item.getQuantity();
+                double totalPrice = existing.getPrice() * existing.getQuantity() + item.getPrice() * item.getQuantity();
+                double newPrice = totalQuantity == 0 ? 0 : totalPrice / totalQuantity;
+
+                existing.setQuantity(totalQuantity);
+                existing.setPrice(newPrice);
+            } else {
+                // You may want to create a new instance if you want to avoid mutating input objects
+                mergedMap.put(productId, item);
+            }
+        }
+
+        return new ArrayList<>(mergedMap.values());
     }
 
 }

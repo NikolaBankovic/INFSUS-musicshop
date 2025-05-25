@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/musicshop_db
+    username: musicshop
+    password: S3cret
+  jpa:
+    hibernate:
+      ddl-auto: none
+  liquibase:
+    change-log: classpath:/db/db-changelog.xml
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB

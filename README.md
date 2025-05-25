@@ -67,4 +67,4 @@ Provjera instalacije:
 
 > **Napomena:**  
 > Prije svakog pokretanja, provjeri da su Docker i svi servisi iz `docker-compose.yml` ispravno pokrenuti.
-
+> Aplikacija je dostupna na adresi: [http://localhost:8080](http://localhost:8080)

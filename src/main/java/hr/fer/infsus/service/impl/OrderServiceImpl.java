@@ -103,6 +103,7 @@ public class OrderServiceImpl implements OrderService {
         if (orderItem.isPresent()) {
             orderItem.get().setQuantity(changeOrderItemDto.quantity());
             orderItemRepository.save(orderItem.get());
+            order.getOrderItemsList();
         } else {
             final OrderItem newOrderItem = new OrderItem();
             newOrderItem.setOrder(order);
@@ -110,8 +111,9 @@ public class OrderServiceImpl implements OrderService {
             newOrderItem.setQuantity(changeOrderItemDto.quantity());
             newOrderItem.setPrice(product.getPrice());
             orderItemRepository.save(newOrderItem);
+            order.getOrderItemsList().add(newOrderItem);
         }
-
+        order.setTotalAmount();
         return orderMapper.orderToOrderDto(orderRepository.save(order));
     }
 
@@ -130,7 +132,7 @@ public class OrderServiceImpl implements OrderService {
             orderRepository.save(order);
             orderItemRepository.delete(orderItem.get());
         }
-
+        order.setTotalAmount();
         return orderMapper.orderToOrderDto(orderRepository.save(order));
 
     }
